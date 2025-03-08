@@ -75,13 +75,15 @@ public class Calculator extends JFrame implements ActionListener {
         JPanel bottomPanel = new JPanel(new BorderLayout());
         // Lịch sử phép tính
         // JscrollPanel thanh cuộn nếu nội dung quá dài 
-        historyArea = new JTextArea(5, 20);
-        historyArea.setEditable(false);
-        historyArea.setFont(new Font("Arial", Font.BOLD, 14));
-        historyArea.setBackground(new Color(20, 20, 20));
-        historyArea.setForeground(Color.WHITE);
-        historyArea.setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY, 2));
-        bottomPanel.add(new JScrollPane(historyArea), BorderLayout.CENTER);
+        // Lịch sử phép tính
+historyArea = new JTextArea(5, 20);
+historyArea.setEditable(false);
+historyArea.setFont(new Font("Arial", Font.BOLD, 14));
+historyArea.setBackground(new Color(20, 20, 20));
+historyArea.setForeground(Color.WHITE);
+historyArea.setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY, 2));
+historyArea.setText("Chưa có lịch sử tính toán"); // Dòng mặc định ban đầu
+bottomPanel.add(new JScrollPane(historyArea), BorderLayout.CENTER);
 
         JPanel buttonBottomPanel = new JPanel(new GridLayout(1, 2, 5, 0));
 // Nút quay lại và xóa lịch sử 
@@ -95,10 +97,11 @@ public class Calculator extends JFrame implements ActionListener {
         });
 
         JButton clearHistoryButton = new JButton("Xóa lịch sử");
-        clearHistoryButton.setFont(new Font("Arial", Font.BOLD, 16));
-        clearHistoryButton.setBackground(Color.ORANGE);
-        clearHistoryButton.setForeground(Color.BLACK);
-        clearHistoryButton.addActionListener(e -> historyArea.setText(""));
+clearHistoryButton.setFont(new Font("Arial", Font.BOLD, 16));
+clearHistoryButton.setBackground(Color.ORANGE);
+clearHistoryButton.setForeground(Color.BLACK);
+clearHistoryButton.addActionListener(e -> historyArea.setText("Chưa có lịch sử tính toán"));
+
 
         buttonBottomPanel.add(backButton);
         buttonBottomPanel.add(clearHistoryButton);
@@ -140,68 +143,85 @@ public class Calculator extends JFrame implements ActionListener {
         return button;
     }
 // Lấy nội dung nút bấm
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        String command = e.getActionCommand();
-        switch (command) {
-            case "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "." -> {
-                if (newInput) {
-                    currentInput = "";
-                    newInput = false;
-                }
-                currentInput += command;
+@Override
+public void actionPerformed(ActionEvent e) {
+    String command = e.getActionCommand();
+    switch (command) {
+        case "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "." -> {
+            if (newInput) {
+                currentInput = "";
+                newInput = false;
+            }
+            currentInput += command;
+            display.setText(currentInput);
+        }
+        case "+", "-", "*", "/", "^", "xʸ", "(", ")" -> {
+            if (newInput) {
+                newInput = false;
+            }
+            if (!currentInput.isEmpty() && !currentInput.endsWith(" ")) {
+                currentInput += " " + (command.equals("xʸ") ? "^" : command) + " ";
                 display.setText(currentInput);
             }
-            case "+", "-", "*", "/", "^", "xʸ", "%", "(", ")" -> {
-                if (newInput) {
-                    newInput = false;
-                }
-                if (!currentInput.isEmpty() && !currentInput.endsWith(" ")) {
-                    currentInput += " " + (command.equals("xʸ") ? "^" : command) + " ";
-                    display.setText(currentInput);
-                }
-            }
-            case "C" -> {
-                currentInput = "";
-                display.setText("");
-            }
-            case "←" -> {
-                if (!currentInput.isEmpty()) {
-                    currentInput = currentInput.substring(0, currentInput.length() - 1);
-                    display.setText(currentInput);
-                }
-            }
-            case "√" -> {
+        }
+        case "%" -> {
+            if (!currentInput.isEmpty() && !currentInput.endsWith(" ")) {
                 try {
                     double num = Double.parseDouble(currentInput);
-                    if (num < 0) {
-                        display.setText("Lỗi");
-                    } else {
-                        currentInput = String.valueOf(Math.sqrt(num));
-                        display.setText(currentInput);
-                    }
+                    currentInput = String.valueOf(num / 100);
+                    display.setText(currentInput);
                     newInput = true;
                 } catch (Exception ex) {
                     display.setText("Lỗi");
                 }
             }
-            case "=" -> {
-                try {
-                    double result = evaluateExpression(currentInput);
-                    if (Double.isNaN(result)) {
-                        display.setText("Lỗi");
-                    } else {
-                        historyArea.append(currentInput + " = " + result + "\n");
-                        currentInput = String.valueOf(result);
-                        display.setText(currentInput);
-                        newInput = true;
-                    }
-                } catch (Exception ex) {
-                    display.setText("Lỗi");
-                }
+        }
+        case "C" -> {
+            currentInput = "";
+            display.setText("");
+        }
+        case "←" -> {
+            if (!currentInput.isEmpty()) {
+                currentInput = currentInput.substring(0, currentInput.length() - 1);
+                display.setText(currentInput);
             }
         }
+        case "√" -> {
+            try {
+                double num = Double.parseDouble(currentInput);
+                if (num < 0) {
+                    display.setText("Lỗi");
+                } else {
+                    currentInput = String.valueOf(Math.sqrt(num));
+                    display.setText(currentInput);
+                }
+                newInput = true;
+            } catch (Exception ex) {
+                display.setText("Lỗi");
+            }
+        }
+        case "=" -> {
+            try {
+                double result = evaluateExpression(currentInput);
+                if (Double.isNaN(result)) {
+                    display.setText("Lỗi");
+                } else {
+                    if (historyArea.getText().equals("Chưa có lịch sử tính toán")) {
+                        historyArea.setText(""); // Xóa dòng mặc định nếu có
+                    }
+                    historyArea.append(currentInput + " = " + result + "\n");
+                    currentInput = String.valueOf(result);
+                    display.setText(currentInput);
+                    newInput = true;
+                }
+            } catch (Exception ex) {
+                display.setText("Lỗi");
+            }
+        }
+        
     }
+}
+
 // Chuyển đổi biểu thức từ dạng trung tố sang hậu tố (convertToPostfix).
     private double evaluateExpression(String expression) {
         try {
@@ -219,10 +239,11 @@ public class Calculator extends JFrame implements ActionListener {
         for (String token : tokens) {
             if (token.matches("[0-9]+(\\.[0-9]+)?")) { 
                 output.append(token).append(" ");
-            } else if ("+-*/^%".contains(token)) {
-                while (!stack.isEmpty() && precedence(stack.peek()) >= precedence(token)) {
-                    output.append(stack.pop()).append(" ");
-                }
+            } else if ("%".equals(token)) {
+                output.append("% ").append(" ");  // Thêm % vào ngay sau số trước nó
+            } else if ("+-*/^".contains(token)) {
+            
+            
                 stack.push(token);
             } else if (token.equals("(")) {
                 stack.push(token);
@@ -246,6 +267,10 @@ public class Calculator extends JFrame implements ActionListener {
         for (String token : tokens) {
             if (token.matches("[0-9]+(\\.[0-9]+)?")) {
                 stack.push(Double.parseDouble(token));
+            } else if ("%".equals(token)) {
+                if (!stack.isEmpty()) {
+                    stack.push(stack.pop() / 100); // Chia số trên đỉnh stack cho 100
+                }
             } else {
                 double b = stack.pop();
                 double a = stack.pop();
@@ -255,7 +280,6 @@ public class Calculator extends JFrame implements ActionListener {
                     case "*" -> a * b;
                     case "/" -> a / b;
                     case "^" -> Math.pow(a, b);
-                    case "%" -> a * (b / 100);
                     default -> throw new IllegalArgumentException("Phép toán không hợp lệ");
                 });
             }
